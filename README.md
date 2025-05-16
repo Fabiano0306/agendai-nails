@@ -1,4 +1,4 @@
-# Bem-vindo ao seu projeto Lovable
+# Bem-vindo ao AgendAI Nails
 
 ## Informações do projeto
 
