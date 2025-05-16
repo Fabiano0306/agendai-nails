@@ -4,50 +4,11 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-
-interface ProfileData {
-  id: string;
-  full_name: string;
-  user_type: "professional" | "client";
-  phone_number?: string;
-  bio?: string;
-  profile_image_url?: string;
-}
-
-interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  profile: ProfileData | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: {
-    full_name: string;
-    user_type: "professional" | "client";
-    phone_number?: string;
-  }) => Promise<void>;
-  signOut: () => Promise<void>;
-  loading: boolean;
-  userLoading: boolean;
-}
+import { AuthContextType, ProfileData } from "@/types/auth.types";
+import { useProfileFetch } from "@/hooks/useProfileFetch";
+import { signInWithEmail, signUpWithEmail, signOutUser } from "@/services/authService";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Helper function to clean up auth state
-const cleanupAuthState = () => {
-  // Remove standard auth tokens
-  localStorage.removeItem('supabase.auth.token');
-  // Remove all Supabase auth keys from localStorage
-  Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      localStorage.removeItem(key);
-    }
-  });
-  // Remove from sessionStorage if in use
-  Object.keys(sessionStorage || {}).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      sessionStorage.removeItem(key);
-    }
-  });
-};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -57,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userLoading, setUserLoading] = useState<boolean>(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { fetchUserProfile } = useProfileFetch();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -68,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (currentSession?.user) {
           // Use setTimeout to prevent deadlocks
           setTimeout(() => {
-            fetchUserProfile(currentSession.user.id);
+            fetchAndSetUserProfile(currentSession.user.id);
           }, 0);
         } else {
           setProfile(null);
@@ -82,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentSession?.user ?? null);
       
       if (currentSession?.user) {
-        fetchUserProfile(currentSession.user.id);
+        fetchAndSetUserProfile(currentSession.user.id);
       }
       setUserLoading(false);
     });
@@ -90,44 +52,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
   
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-        
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return;
-      }
-      
-      if (data) {
-        setProfile(data as ProfileData);
-      }
-    } catch (error) {
-      console.error("Error in fetchUserProfile:", error);
+  const fetchAndSetUserProfile = async (userId: string) => {
+    const profileData = await fetchUserProfile(userId);
+    if (profileData) {
+      setProfile(profileData);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Clean up existing state
-      cleanupAuthState();
-      
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await signInWithEmail(email, password);
 
       if (error) {
         toast({
@@ -183,23 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     setLoading(true);
     try {
-      // Clean up existing state
-      cleanupAuthState();
-      
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData,
-        },
-      });
+      const { data, error } = await signUpWithEmail(email, password, userData);
 
       if (error) {
         toast({
@@ -236,11 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Clean up auth state
-      cleanupAuthState();
-      
-      // Attempt global sign out
-      await supabase.auth.signOut({ scope: 'global' });
+      await signOutUser();
       
       // Force page reload for a clean state
       window.location.href = "/";
