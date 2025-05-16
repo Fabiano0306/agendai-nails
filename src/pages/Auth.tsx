@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const { signIn, signUp, user, loading, profile } = useAuth();
@@ -16,6 +17,24 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [userType, setUserType] = useState<"professional" | "client">("client");
+  const [activeTab, setActiveTab] = useState("login");
+  const location = useLocation();
+  const { toast } = useToast();
+
+  // Parse URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    const typeParam = params.get('type');
+    
+    if (tabParam === 'register' || tabParam === 'login') {
+      setActiveTab(tabParam);
+    }
+    
+    if (typeParam === 'professional' || typeParam === 'client') {
+      setUserType(typeParam);
+    }
+  }, [location]);
 
   // If user is already logged in, redirect to appropriate dashboard
   if (user && profile) {
@@ -28,16 +47,42 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signIn(email, password);
+    try {
+      await signIn(email, password);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao entrar",
+        description: "Verifique seu e-mail e senha e tente novamente."
+      });
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signUp(email, password, {
-      full_name: fullName,
-      user_type: userType,
-      phone_number: phoneNumber,
-    });
+    
+    if (password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres."
+      });
+      return;
+    }
+
+    try {
+      await signUp(email, password, {
+        full_name: fullName,
+        user_type: userType,
+        phone_number: phoneNumber,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar conta",
+        description: "Verifique seus dados e tente novamente."
+      });
+    }
   };
 
   return (
@@ -51,7 +96,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Cadastro</TabsTrigger>

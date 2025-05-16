@@ -17,7 +17,7 @@ const Hero = () => {
               completo para fidelizar seus clientes.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link to="/cadastro">
+              <Link to="/auth?tab=register&type=client">
                 <Button className="bg-brand-pink hover:bg-brand-dark-pink text-white rounded-full px-8 py-6 text-lg">
                   Começar grátis
                 </Button>

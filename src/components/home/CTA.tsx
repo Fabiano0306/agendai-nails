@@ -13,14 +13,14 @@ const CTA = () => {
           Junte-se a milhares de profissionais que estão modernizando seu atendimento e crescendo seus negócios.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/cadastro">
+          <Link to="/auth?tab=register&type=professional">
             <Button className="bg-white text-brand-pink hover:bg-gray-100 hover:text-brand-dark-pink rounded-full px-8 py-6 text-lg">
-              Criar conta grátis
+              Criar conta para profissionais
             </Button>
           </Link>
-          <Link to="/demo">
+          <Link to="/auth?tab=register&type=client">
             <Button variant="outline" className="border-white text-white hover:bg-white/10 rounded-full px-8 py-6 text-lg">
-              Agendar demonstração
+              Criar conta para clientes
             </Button>
           </Link>
         </div>
