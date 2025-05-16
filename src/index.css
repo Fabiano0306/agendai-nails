@@ -69,3 +69,40 @@
     @apply transition-all hover:shadow-lg hover:-translate-y-1;
   }
 }
+
+:root {
+  --brand-pink: #FF69B4;
+  --brand-dark-pink: #FF1493;
+}
+
+.bg-brand-pink {
+  background-color: var(--brand-pink);
+}
+
+.bg-brand-dark-pink {
+  background-color: var(--brand-dark-pink);
+}
+
+.text-brand-pink {
+  color: var(--brand-pink);
+}
+
+.border-brand-pink {
+  border-color: var(--brand-pink);
+}
+
+.hover\:bg-brand-dark-pink:hover {
+  background-color: var(--brand-dark-pink);
+}
+
+.hover\:text-brand-pink:hover {
+  color: var(--brand-pink);
+}
+
+.from-brand-pink {
+  --tw-gradient-from: var(--brand-pink);
+}
+
+.to-brand-dark-pink {
+  --tw-gradient-to: var(--brand-dark-pink);
+}

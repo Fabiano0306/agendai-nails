@@ -1,97 +1,154 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
+  const { user, profile, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0">
-              <h1 className="text-2xl font-bold gradient-text">AgendAI Nails</h1>
+    <nav className={`fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300 ${
+      scrolled ? "bg-white shadow-md" : "bg-transparent"
+    }`}>
+      <div className="container flex justify-between items-center">
+        <Link to="/" className="text-xl font-bold gradient-text">
+          AgendAI Nails
+        </Link>
+        
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          <Link to="/" className="text-gray-700 hover:text-brand-pink">
+            Home
+          </Link>
+          <Link to="/como-funciona" className="text-gray-700 hover:text-brand-pink">
+            Como Funciona
+          </Link>
+          <Link to="/planos" className="text-gray-700 hover:text-brand-pink">
+            Planos
+          </Link>
+          
+          {user ? (
+            <>
+              {profile?.user_type === "professional" ? (
+                <Link to="/dashboard" className="text-gray-700 hover:text-brand-pink">
+                  Dashboard
+                </Link>
+              ) : (
+                <Link to="/agendamento" className="text-gray-700 hover:text-brand-pink">
+                  Agendamento
+                </Link>
+              )}
+              <Button onClick={signOut} variant="outline" className="ml-4">
+                Sair
+              </Button>
+            </>
+          ) : (
+            <Link to="/auth">
+              <Button className="bg-brand-pink hover:bg-brand-dark-pink">
+                Entrar
+              </Button>
             </Link>
-            <div className="hidden md:block ml-10">
-              <div className="flex items-center space-x-4">
-                <Link to="/como-funciona" className="text-gray-600 hover:text-brand-pink px-3 py-2 rounded-md font-medium">
-                  Como funciona
-                </Link>
-                <Link to="/planos" className="text-gray-600 hover:text-brand-pink px-3 py-2 rounded-md font-medium">
-                  Planos
-                </Link>
-                <Link to="/contato" className="text-gray-600 hover:text-brand-pink px-3 py-2 rounded-md font-medium">
-                  Contato
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-4">
-              <Link to="/login">
-                <Button variant="outline" className="rounded-full border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white">
-                  Entrar
-                </Button>
-              </Link>
-              <Link to="/cadastro">
-                <Button className="bg-brand-pink hover:bg-brand-dark-pink text-white rounded-full">
-                  Cadastre-se
-                </Button>
-              </Link>
-            </div>
-          </div>
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-600 hover:text-brand-pink"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+          )}
         </div>
+        
+        {/* Mobile menu button */}
+        <button 
+          onClick={toggleMenu}
+          className="md:hidden text-gray-700"
+          aria-label="Menu"
+        >
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
-
+      
+      {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg rounded-b-lg">
-            <Link
-              to="/como-funciona"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-brand-pink"
+        <div className="md:hidden bg-white border-t shadow-lg">
+          <div className="container py-4 flex flex-col space-y-4">
+            <Link 
+              to="/" 
+              className="px-4 py-2 text-gray-700 hover:bg-pink-50 rounded-md"
               onClick={() => setIsMenuOpen(false)}
             >
-              Como funciona
+              Home
             </Link>
-            <Link
-              to="/planos"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-brand-pink"
+            <Link 
+              to="/como-funciona" 
+              className="px-4 py-2 text-gray-700 hover:bg-pink-50 rounded-md"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Como Funciona
+            </Link>
+            <Link 
+              to="/planos" 
+              className="px-4 py-2 text-gray-700 hover:bg-pink-50 rounded-md"
               onClick={() => setIsMenuOpen(false)}
             >
               Planos
             </Link>
-            <Link
-              to="/contato"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-brand-pink"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Contato
-            </Link>
-            <Link
-              to="/login"
-              className="block px-3 py-2 rounded-md text-base font-medium text-brand-pink hover:bg-brand-light-pink"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Entrar
-            </Link>
-            <Link
-              to="/cadastro"
-              className="block px-3 py-2 rounded-md text-base font-medium bg-brand-pink text-white hover:bg-brand-dark-pink"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Cadastre-se
-            </Link>
+            
+            {user ? (
+              <>
+                {profile?.user_type === "professional" ? (
+                  <Link 
+                    to="/dashboard" 
+                    className="px-4 py-2 text-gray-700 hover:bg-pink-50 rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link 
+                    to="/agendamento" 
+                    className="px-4 py-2 text-gray-700 hover:bg-pink-50 rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Agendamento
+                  </Link>
+                )}
+                <Button 
+                  onClick={() => {
+                    signOut();
+                    setIsMenuOpen(false);
+                  }} 
+                  variant="outline" 
+                  className="w-full"
+                >
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <Link 
+                to="/auth" 
+                className="w-full"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Button className="w-full bg-brand-pink hover:bg-brand-dark-pink">
+                  Entrar
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       )}
